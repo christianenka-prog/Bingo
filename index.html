@@ -3,824 +3,1166 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Onsdagsnøtt</title>
-<link href="https://fonts.googleapis.com/css2?family=Karla:wght@400;500;700;800&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<title>Eurovision Bingo</title>
+<link href="https://fonts.googleapis.com/css2?family=Abril+Fatface&family=DM+Sans:wght@300;400;600&display=swap" rel="stylesheet">
 <style>
-  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-  :root {
-    --bg: #ffffff;
-    --border: #dfdfdf;
-    --text: #1a1a1a;
-    --muted: #787878;
-    --accent: #1a1a1a;
-    --tile-bg: #efefe6;
-    --tile-hover: #deded4;
-    --tile-sel: #5a594e;
-    --y: #f9df6d; --g: #a0c35a; --b: #b0c4ef; --p: #ba81c5;
-    --r: 8px;
-    --font: 'Karla', sans-serif;
-    --mono: 'DM Mono', monospace;
-  }
+:root {
+  color-scheme: dark;
+  --gold: #FFD700;
+  --hot-pink: #FF0099;
+  --electric-blue: #00C3FF;
+  --deep-purple: #1a003d;
+  --mid-purple: #2d0060;
+  --light-purple: #5a00b8;
+  --white: #ffffff;
+  --card-bg: rgba(255,255,255,0.06);
+  --card-border: rgba(255,255,255,0.15);
+}
 
-  body { background:var(--bg); color:var(--text); font-family:var(--font); min-height:100vh; display:flex; flex-direction:column; align-items:center; padding:0 1.5rem 5rem; }
+* { box-sizing: border-box; margin: 0; padding: 0; }
 
-  /* TOP BAR */
-  .topbar { width:100%; max-width:600px; display:flex; align-items:center; justify-content:center; padding:1.5rem 0 1.2rem; border-bottom:1px solid var(--border); margin-bottom:2rem; position:relative; }
-  .topbar h1 { font-size:22px; font-weight:800; letter-spacing:.02em; text-transform:uppercase; }
-  .topbar .brain { font-size:20px; margin-right:8px; }
+html, body {
+  background: #1a003d !important;
+  color: #ffffff;
+}
 
-  .screen { display:none; width:100%; max-width:580px; }
-  .screen.active { display:block; }
+body {
+  background-image:
+    radial-gradient(ellipse at 20% 20%, #3d0080 0%, transparent 50%),
+    radial-gradient(ellipse at 80% 80%, #00204d 0%, transparent 50%),
+    radial-gradient(ellipse at 50% 50%, #1a003d 0%, transparent 70%);
+  font-family: 'DM Sans', sans-serif;
+  min-height: 100vh;
+  padding: 18px 10px;
+  overflow-x: hidden;
+}
 
-  /* LOGIN */
-  #loginScreen { text-align:center; padding-top:3rem; }
-  #loginScreen .sub { font-size:19px; font-weight:700; margin-bottom:6px; }
-  #loginScreen p { font-size:15px; color:var(--muted); margin-bottom:2.5rem; line-height:1.5; }
-  .input-row { display:flex; gap:8px; max-width:360px; margin:0 auto 1rem; }
-  input[type=text] { flex:1; padding:12px 16px; border-radius:999px; border:2px solid var(--border); background:#fff; color:var(--text); font-family:var(--font); font-size:16px; outline:none; transition:border-color .15s; }
-  input[type=text]:focus { border-color:var(--accent); }
-  .btn { padding:12px 24px; border-radius:999px; border:2px solid var(--accent); background:var(--accent); color:#fff; font-family:var(--font); font-size:15px; font-weight:700; cursor:pointer; transition:opacity .15s; white-space:nowrap; }
-  .btn:hover { opacity:.8; }
-  .btn:disabled { opacity:.35; cursor:not-allowed; }
-  .btn.ghost { background:transparent; color:var(--accent); }
-  .btn.ghost:hover { background:#f5f5f5; }
-  .err { font-size:13px; color:#d0021b; margin-top:8px; min-height:18px; }
-  .divider { display:flex; align-items:center; gap:12px; max-width:360px; margin:1.2rem auto; color:var(--muted); font-size:13px; }
-  .divider::before, .divider::after { content:''; flex:1; height:1px; background:var(--border); }
-  .archive-btn { display:block; max-width:360px; margin:0 auto; padding:12px; border-radius:999px; border:2px solid var(--border); background:transparent; color:var(--muted); font-family:var(--font); font-size:15px; font-weight:600; cursor:pointer; transition:all .15s; text-align:center; }
-  .archive-btn:hover { border-color:var(--accent); color:var(--text); }
+/* Stars */
+.stars {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  overflow: hidden;
+}
+.star {
+  position: absolute;
+  width: 2px; height: 2px;
+  background: white;
+  border-radius: 50%;
+  animation: twinkle 3s infinite alternate;
+}
+@keyframes twinkle {
+  from { opacity: 0.2; transform: scale(1); }
+  to { opacity: 1; transform: scale(1.5); }
+}
 
-  /* ARCHIVE */
-  #archiveScreen { padding-top:1rem; }
-  #archiveScreen h2 { font-size:22px; font-weight:800; margin-bottom:6px; }
-  #archiveScreen .arch-sub { font-size:14px; color:var(--muted); margin-bottom:2rem; }
-  .archive-list { display:flex; flex-direction:column; gap:8px; margin-bottom:2rem; }
-  .archive-item { padding:16px 18px; border-radius:var(--r); border:1px solid var(--border); cursor:pointer; transition:all .15s; display:flex; justify-content:space-between; align-items:center; }
-  .archive-item:hover { background:#fafafa; border-color:#bbb; }
-  .archive-item .a-title { font-size:16px; font-weight:700; }
-  .archive-item .a-sub { font-size:13px; color:var(--muted); margin-top:2px; }
-  .archive-item .a-arrow { color:var(--muted); font-size:22px; }
-  .back-btn { font-size:14px; color:var(--muted); background:none; border:none; cursor:pointer; padding:0 0 1rem; text-decoration:underline; display:inline-block; font-family:var(--font); }
+.container {
+  position: relative;
+  z-index: 1;
+  max-width: 760px;
+  margin: 0 auto;
+}
 
-  /* DONE */
-  #doneScreen { text-align:center; padding-top:3rem; }
-  #doneScreen h2 { font-size:26px; font-weight:800; margin-bottom:8px; }
-  #doneScreen p { font-size:16px; color:var(--muted); margin-bottom:2rem; }
+header { text-align: center; margin-bottom: 20px; }
 
-  /* GAME */
-  .game-header { display:flex; justify-content:space-between; align-items:center; padding-bottom:1.2rem; border-bottom:1px solid var(--border); margin-bottom:1.8rem; }
-  .game-title { font-size:16px; font-weight:700; color:var(--muted); }
-  .timer { font-family:var(--mono); font-size:18px; font-weight:500; }
-  .archive-badge { font-size:11px; background:#f0f0f0; color:var(--muted); padding:3px 8px; border-radius:20px; font-weight:600; margin-left:6px; }
+.badge {
+  display: inline-block;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  color: var(--gold);
+  border: 1px solid var(--gold);
+  border-radius: 20px;
+  padding: 4px 14px;
+  margin-bottom: 12px;
+  animation: pulse-border 2s infinite;
+}
+@keyframes pulse-border {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(255,215,0,0.3); }
+  50% { box-shadow: 0 0 0 6px rgba(255,215,0,0); }
+}
 
-  .mistakes { display:flex; align-items:center; gap:8px; margin-bottom:1.4rem; justify-content:center; }
-  .mistakes span { font-size:15px; color:var(--muted); font-weight:600; }
+h1 {
+  font-family: 'Abril Fatface', serif;
+  font-size: clamp(2.2rem, 8vw, 3.8rem);
+  line-height: 1;
+  background: linear-gradient(135deg, var(--gold), var(--hot-pink), var(--electric-blue), var(--gold));
+  background-size: 300% 300%;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  animation: shimmer 4s linear infinite;
+  margin-bottom: 8px;
+}
+@keyframes shimmer {
+  0% { background-position: 0% 50%; }
+  100% { background-position: 300% 50%; }
+}
 
-  /* Solved cards */
-  .solved-area { display:flex; flex-direction:column; gap:8px; margin-bottom:8px; }
-  .solved-card { border-radius:var(--r); padding:4px 16px; animation:popIn .35s ease forwards; display:flex; flex-direction:column; align-items:center; justify-content:center; min-height:72px; }
-  .solved-card .s-label { font-size:11px; font-weight:700; letter-spacing:.12em; text-transform:uppercase; margin-bottom:2px; color:rgba(0,0,0,0.5); }
-  .solved-card .s-cat { font-size:18px; font-weight:800; color:#1a1a1a; text-align:center; }
-  .solved-card .s-words { font-size:13px; margin-top:3px; color:rgba(0,0,0,0.55); text-align:center; font-weight:500; }
-  @keyframes popIn { 0%{opacity:0;transform:scale(.95)} 60%{transform:scale(1.02)} 100%{opacity:1;transform:scale(1)} }
+.subtitle {
+  color: rgba(255,255,255,0.55);
+  font-size: 13px;
+  letter-spacing: 1px;
+}
 
-  /* Grid */
-  .grid { display:grid; grid-template-columns:repeat(4,1fr); gap:10px; margin-bottom:20px; }
-  .tile {
-    background:var(--tile-bg);
-    border:none;
-    border-radius:var(--r);
-    padding:18px 4px;
-    text-align:center;
-    font-size:17px;
-    font-weight:800;
-    text-transform:uppercase;
-    letter-spacing:.02em;
-    cursor:pointer;
-    user-select:none;
-    transition:background .1s, transform .1s;
-    min-height:90px;
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    line-height:1.2;
-    color:var(--text);
-  }
-  .tile:hover { background:var(--tile-hover); }
-  .tile.selected { background:var(--tile-sel); color:#ffffff; transform:scale(1.04); }
-  .tile.shake { animation:shake .4s ease; }
-  @keyframes shake { 0%,100%{transform:translateX(0)} 25%{transform:translateX(-6px)} 75%{transform:translateX(6px)} }
+.board-name {
+  margin-top: 10px;
+  font-size: 11px;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  color: var(--gold);
+}
 
-  .msg { font-size:15px; color:var(--muted); text-align:center; min-height:24px; margin-bottom:16px; font-weight:600; }
-  .game-controls { display:flex; gap:10px; justify-content:center; }
+.swap-btn {
+  display: none;
+  margin: 10px auto 0;
+  background: transparent;
+  border: 1px solid rgba(255,255,255,0.2);
+  color: rgba(255,255,255,0.55);
+  font-family: 'DM Sans', sans-serif;
+  font-size: 10px;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  padding: 6px 14px;
+  border-radius: 14px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.swap-btn:hover {
+  border-color: var(--gold);
+  color: var(--gold);
+}
+.swap-btn.visible { display: inline-block; }
 
-  /* RESULT */
-  #resultScreen { padding-top:3rem; }
-  #resultScreen h2 { font-size:26px; font-weight:800; margin-bottom:4px; text-align:center; }
-  .result-sub { font-size:15px; color:var(--muted); margin-bottom:2rem; font-weight:500; text-align:center; }
-  
-  .stat-row { display:flex; justify-content:center; gap:0; margin-bottom:2.5rem; border:1.5px solid var(--border); border-radius:var(--r); overflow:hidden; }
-  .stat { flex:1; padding:1.4rem 0.5rem; text-align:center; border-right:1px solid var(--border); }
-  .stat:last-child { border-right:none; }
-  .stat-val { font-family:var(--mono); font-size:30px; font-weight:700; }
-  .stat-label { font-size:11px; color:var(--muted); margin-top:3px; font-weight:700; text-transform:uppercase; letter-spacing:.08em; }
+/* PICK SCREEN */
+#pickScreen {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding-top: 40px;
+}
 
-  .lb-title { font-size:11px; font-weight:700; color:var(--muted); text-transform:uppercase; letter-spacing:.1em; margin-bottom:0; }
-  .lb-wrap { border:1.5px solid var(--border); border-radius:var(--r); overflow:hidden; margin-bottom:2rem; }
-  .lb-head { display:grid; grid-template-columns:36px 1fr 80px 60px; padding:8px 14px; background:#f9f9f9; border-bottom:1px solid var(--border); font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:.08em; color:var(--muted); }
-  .lb-row { display:grid; grid-template-columns:36px 1fr 80px 60px; padding:15px 14px; border-bottom:1px solid var(--border); font-size:14px; align-items:center; transition:background .1s; }
-  .lb-row:last-child { border-bottom:none; }
-  .lb-row:hover { background:#fafafa; }
-  .lb-row.me { background:#fffbea; font-weight:700; }
-  .lb-row.me .lb-rank { color:var(--accent); }
-  .lb-rank { font-family:var(--mono); font-size:13px; color:var(--muted); }
-  .lb-rank.top1 { color:#c9a227; font-weight:800; }
-  .lb-rank.top2 { color:#888; font-weight:800; }
-  .lb-rank.top3 { color:#a0673a; font-weight:800; }
-  .lb-name { font-weight:600; }
-  .lb-time { font-family:var(--mono); font-size:13px; color:var(--muted); }
-  .lb-feil { font-size:13px; color:var(--muted); text-align:right; }
-  .play-again-btn { display:block; text-align:center; font-size:14px; color:var(--muted); background:none; border:none; cursor:pointer; text-decoration:underline; font-family:var(--font); margin-top:0.5rem; }
+.pick-sub {
+  color: rgba(255,255,255,0.55);
+  font-size: 13px;
+  letter-spacing: 1px;
+  margin-bottom: 32px;
+  text-align: center;
+}
 
-  /* ADMIN */
-  #adminOverlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.5); z-index:100; align-items:center; justify-content:center; }
-  #adminOverlay.open { display:flex; }
-  #adminBox { background:#fff; border-radius:12px; padding:2rem; width:100%; max-width:660px; max-height:90vh; overflow-y:auto; position:relative; }
-  #adminBox h2 { font-size:20px; font-weight:800; margin-bottom:4px; }
-  #adminBox .admin-sub { font-size:13px; color:var(--muted); margin-bottom:2rem; }
-  .admin-close { position:absolute; top:1rem; right:1rem; background:none; border:none; font-size:22px; cursor:pointer; color:var(--muted); }
-  .admin-section { margin-bottom:2rem; }
-  .admin-section label { display:block; font-size:12px; font-weight:700; text-transform:uppercase; letter-spacing:.08em; color:var(--muted); margin-bottom:6px; }
-  .admin-section input[type=text], .admin-section input[type=password] { width:100%; padding:10px 14px; border-radius:var(--r); border:1.5px solid var(--border); font-family:var(--font); font-size:15px; outline:none; transition:border-color .15s; box-sizing:border-box; }
-  .admin-section input:focus { border-color:var(--accent); }
-  .group-row { display:grid; grid-template-columns:200px 1fr; gap:8px; margin-bottom:8px; }
-  .group-row input { padding:9px 12px; border-radius:var(--r); border:1.5px solid var(--border); font-family:var(--font); font-size:14px; outline:none; width:100%; box-sizing:border-box; }
-  .group-row input:focus { border-color:var(--accent); }
-  .group-label-row { display:flex; align-items:center; gap:8px; margin-bottom:4px; font-size:12px; font-weight:700; text-transform:uppercase; letter-spacing:.08em; }
-  .color-dot { width:12px; height:12px; border-radius:3px; flex-shrink:0; }
-  .admin-actions { display:flex; gap:8px; flex-wrap:wrap; margin-top:1rem; }
-  .admin-err { font-size:13px; color:#d0021b; margin-top:6px; min-height:16px; }
-  #codeOutput { width:100%; font-family:var(--mono); font-size:11px; padding:12px; border-radius:var(--r); border:1.5px solid var(--border); background:#f9f9f9; min-height:100px; resize:vertical; outline:none; box-sizing:border-box; }
-  .copy-success { font-size:13px; color:#2d6a1f; margin-top:6px; min-height:16px; font-weight:600; }
-  /* SUMMARY */
-  #summaryScreen { text-align:center; padding-top:3.5rem; }
-  #summaryScreen h2 { font-size:28px; font-weight:800; margin-bottom:6px; }
-  .summary-sub { font-size:16px; color:var(--muted); margin-bottom:2rem; font-weight:500; }
-  .emoji-grid { display:flex; flex-direction:column; gap:6px; align-items:center; margin-bottom:2.5rem; }
-  .emoji-row { display:flex; gap:4px; }
-  .emoji-row span { font-size:28px; }
-  .summary-groups { display:flex; flex-direction:column; gap:8px; margin-bottom:2.5rem; text-align:left; }
-  .summary-card { border-radius:var(--r); padding:14px 18px; }
-  .summary-card .sc-label { font-size:10px; font-weight:700; letter-spacing:.12em; text-transform:uppercase; color:rgba(0,0,0,0.5); margin-bottom:2px; }
-  .summary-card .sc-cat { font-size:17px; font-weight:800; color:#1a1a1a; }
-  .summary-card .sc-words { font-size:13px; color:rgba(0,0,0,0.55); margin-top:3px; font-weight:500; }
+.board-list {
+  width: 100%;
+  max-width: 480px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 24px;
+}
 
-  #previewSection { margin-top:1.5rem; padding-top:1.5rem; border-top:1px solid var(--border); }
-  #previewSection h3 { font-size:14px; font-weight:700; text-transform:uppercase; letter-spacing:.08em; color:var(--muted); margin-bottom:10px; }
-  .preview-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:6px; margin-bottom:10px; }
-  .preview-tile { background:var(--tile-bg); border-radius:6px; padding:10px 4px; text-align:center; font-size:12px; font-weight:800; text-transform:uppercase; min-height:48px; display:flex; align-items:center; justify-content:center; line-height:1.2; }
-  .preview-card { border-radius:6px; padding:8px 14px; margin-bottom:6px; }
-  .preview-card .pc-label { font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:.1em; color:rgba(0,0,0,0.5); }
-  .preview-card .pc-cat { font-size:14px; font-weight:800; }
-  .preview-card .pc-words { font-size:11px; color:rgba(0,0,0,0.55); margin-top:2px; }
+.board-option {
+  background: var(--card-bg);
+  border: 1px solid var(--card-border);
+  border-radius: 12px;
+  padding: 18px 22px;
+  cursor: pointer;
+  transition: all 0.2s;
+  position: relative;
+  overflow: hidden;
+}
+.board-option::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, rgba(255,0,153,0.15), rgba(0,195,255,0.15));
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+.board-option:hover {
+  border-color: var(--gold);
+  transform: translateY(-2px);
+}
+.board-option:hover::before { opacity: 1; }
+
+.board-option-name {
+  font-family: 'Abril Fatface', serif;
+  font-size: 1.5rem;
+  color: white;
+  margin-bottom: 4px;
+  position: relative;
+  z-index: 1;
+}
+.board-option-desc {
+  font-size: 12px;
+  color: rgba(255,255,255,0.6);
+  letter-spacing: 0.3px;
+  position: relative;
+  z-index: 1;
+}
+
+.pick-warning {
+  font-size: 10px;
+  color: rgba(255,255,255,0.4);
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  text-align: center;
+}
+
+/* GAME */
+#gameScreen { display: none; }
+
+/* Status */
+.status-bar {
+  display: flex;
+  justify-content: center;
+  gap: 28px;
+  margin-bottom: 14px;
+  font-size: 13px;
+  color: rgba(255,255,255,0.5);
+}
+.status-bar span { display: flex; align-items: center; gap: 6px; }
+.count { font-size: 18px; font-weight: 600; color: var(--gold); }
+
+/* BINGO header row */
+.bingo-header {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 8px;
+  margin-bottom: 6px;
+}
+.bingo-letter {
+  text-align: center;
+  font-family: 'Abril Fatface', serif;
+  font-size: clamp(1.1rem, 3vw, 1.6rem);
+  background: linear-gradient(135deg, var(--gold), var(--hot-pink));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* Grid */
+.bingo-grid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 5px;
+  margin-bottom: 24px;
+}
+
+.bingo-card {
+  aspect-ratio: 1;
+  background: var(--card-bg);
+  border: 1px solid var(--card-border);
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 4px 3px;
+  cursor: pointer;
+  transition: all 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+  position: relative;
+  overflow: hidden;
+  color: rgba(255,255,255,0.85);
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.bingo-card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, var(--hot-pink), var(--electric-blue));
+  opacity: 0;
+  transition: opacity 0.25s;
+  border-radius: 9px;
+}
+
+.bingo-card:hover {
+  transform: scale(1.04);
+  border-color: rgba(255,255,255,0.3);
+}
+
+.bingo-card.marked {
+  border-color: var(--gold);
+  transform: scale(1.04);
+}
+.bingo-card.marked::before { opacity: 1; }
+.bingo-card.marked .card-text { position: relative; z-index: 1; color: white; font-weight: 600; }
+
+.bingo-card.free-space {
+  background: linear-gradient(135deg, #FFD700, #FF8C00);
+  border-color: var(--gold);
+  cursor: default;
+}
+
+.bingo-card.locked-flash {
+  animation: locked-shake 0.5s ease;
+}
+@keyframes locked-shake {
+  0%, 100% { transform: scale(1.04) translateX(0); }
+  20% { transform: scale(1.04) translateX(-6px); border-color: #FF0099; }
+  40% { transform: scale(1.04) translateX(6px); border-color: #FF0099; }
+  60% { transform: scale(1.04) translateX(-4px); border-color: #FF0099; }
+  80% { transform: scale(1.04) translateX(4px); border-color: #FF0099; }
+}
+
+.card-text {
+  font-size: clamp(10px, 2.1vw, 13px);
+  line-height: 1.25;
+  font-weight: 400;
+  position: relative;
+  z-index: 1;
+}
+
+.free-emoji {
+  font-size: clamp(22px, 5.5vw, 36px);
+  line-height: 1;
+  position: relative;
+  z-index: 1;
+}
+
+/* Bingo markers */
+.bingo-markers {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+.marker {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+}
+.marker-dot {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  border: 1px solid rgba(255,255,255,0.25);
+  background: rgba(255,255,255,0.04);
+  transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+.marker-dot.lit {
+  background: var(--gold);
+  border-color: var(--gold);
+  box-shadow:
+    0 0 12px rgba(255,215,0,0.7),
+    0 0 24px rgba(255,215,0,0.4);
+  animation: glow-pulse 2s infinite alternate;
+}
+@keyframes glow-pulse {
+  from { box-shadow: 0 0 8px rgba(255,215,0,0.5), 0 0 18px rgba(255,215,0,0.3); }
+  to { box-shadow: 0 0 16px rgba(255,215,0,0.9), 0 0 32px rgba(255,215,0,0.5); }
+}
+.marker-label {
+  font-size: 9px;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: rgba(255,255,255,0.4);
+  transition: color 0.3s;
+}
+.marker-dot.lit + .marker-label { color: var(--gold); }
+
+/* Confetti canvas */
+#confetti {
+  position: fixed;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  pointer-events: none;
+  z-index: 999;
+}
+
+footer {
+  text-align: center;
+  font-size: 11px;
+  color: rgba(255,255,255,0.25);
+  margin-top: 16px;
+  letter-spacing: 1px;
+}
+
+/* Phase 2 button */
+.phase2-wrap {
+  display: flex;
+  justify-content: center;
+  margin: 12px 0 8px;
+}
+.phase2-btn {
+  background: linear-gradient(135deg, rgba(255,215,0,0.08), rgba(255,0,153,0.08));
+  border: 1px solid rgba(255,215,0,0.4);
+  border-radius: 12px;
+  padding: 14px 24px;
+  cursor: pointer;
+  color: white;
+  font-family: 'DM Sans', sans-serif;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  transition: all 0.25s;
+  position: relative;
+  overflow: hidden;
+}
+.phase2-btn::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, var(--gold), var(--hot-pink));
+  opacity: 0;
+  transition: opacity 0.25s;
+}
+.phase2-btn:hover {
+  border-color: var(--gold);
+  transform: translateY(-2px);
+}
+.phase2-btn:hover::before { opacity: 0.15; }
+
+.phase2-label {
+  font-family: 'Abril Fatface', serif;
+  font-size: 1.2rem;
+  color: var(--gold);
+  position: relative;
+  z-index: 1;
+}
+.phase2-sub {
+  font-size: 10px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: rgba(255,255,255,0.5);
+  position: relative;
+  z-index: 1;
+}
+
+.phase2-btn.active-phase {
+  border-color: var(--hot-pink);
+  background: linear-gradient(135deg, rgba(255,0,153,0.1), rgba(0,195,255,0.1));
+}
+.phase2-btn.active-phase .phase2-label { color: var(--hot-pink); }
 </style>
 </head>
 <body>
 
-<div class="topbar">
-  <span class="brain" ondblclick="openAdmin()" style="cursor:pointer;user-select:none">🧠</span>
-  <h1>Onsdagsnøtt</h1>
-</div>
+<div class="stars" id="stars"></div>
+<canvas id="confetti"></canvas>
 
-<!-- LOGIN -->
-<div id="loginScreen" class="screen active">
-  <div class="sub">Finn de fire gruppene</div>
-  <p>Skriv inn brukernavnet ditt for å starte.<br>Du kan bare spille ukens nøtt én gang.</p>
-  <div class="input-row">
-    <input type="text" id="nameInput" placeholder="Brukernavn" maxlength="20" autocomplete="off" />
-    <button class="btn" id="startBtn" onclick="startGame()">Start</button>
+<div class="container">
+
+  <!-- PICK SCREEN -->
+  <div id="pickScreen">
+    <header>
+      <div class="badge">✦ Eurovision Edition ✦</div>
+      <h1>BINGO</h1>
+      <p class="subtitle">Velg ditt nivå for kvelden</p>
+    </header>
+
+    <div class="board-list" id="boardList"></div>
+
+    <p class="pick-warning">Du kan bytte nivå én gang etter at du har valgt</p>
   </div>
-  <div class="err" id="loginErr"></div>
-  <div class="divider">eller</div>
-  <button class="archive-btn" onclick="show('archiveScreen')">📂 Se tidligere nøtter</button>
-  <button class="archive-btn" style="margin-top:8px" onclick="showPublicLB()">🏆 Se resultatlisten</button>
-</div>
 
-<!-- ARCHIVE -->
-<div id="archiveScreen" class="screen">
-  <button class="back-btn" onclick="show('loginScreen')">← Tilbake</button>
-  <h2>Tidligere nøtter</h2>
-  <p class="arch-sub">Spill gamle nøtter for moro skyld — teller ikke på scoreboardet.</p>
-  <div class="archive-list" id="archiveList"></div>
-</div>
+  <!-- GAME SCREEN -->
+  <div id="gameScreen">
+    <header>
+      <div class="badge">✦ Eurovision Edition ✦</div>
+      <h1>BINGO</h1>
+      <p class="subtitle">Kryss av mens showet ruller</p>
+      <div class="board-name" id="boardName"></div>
+      <button class="swap-btn" id="swapBtn" onclick="swapBoard()">Bytt nivå (1 gang)</button>
+    </header>
 
-
-<!-- SCOREBOARD -->
-<div id="scoreboardScreen" class="screen">
-  <button class="back-btn" onclick="show('loginScreen')">← Tilbake</button>
-  <h2>Resultatliste</h2>
-  <p class="arch-sub">Oversikt over alle som har spilt ukens nøtt.</p>
-  <div class="lb-wrap" style="margin-top:1rem">
-    <div class="lb-head"><span>#</span><span>Navn</span><span>Tid</span><span style="text-align:right">Feil</span></div>
-    <div id="publicLeaderboard"></div>
-  </div>
-</div>
-
-<!-- ALREADY PLAYED -->
-<div id="doneScreen" class="screen">
-  <h2>Du har allerede spilt!</h2>
-  <p>Én spilling per nettleser. Kom tilbake neste uke. 😄</p>
-  <div id="doneBoard" style="margin-top:1.5rem"></div>
-  <button class="archive-btn" style="margin-top:1.5rem" onclick="show('archiveScreen')">📂 Se tidligere nøtter</button>
-</div>
-
-<!-- GAME -->
-<div id="gameScreen" class="screen">
-  <div class="game-header">
-    <span class="game-title" id="playerLabel"></span>
-    <span class="timer" id="timerEl">00:00</span>
-  </div>
-  <div class="mistakes"><span id="feilTeller">Feil: 0</span></div>
-  <div class="solved-area" id="solvedArea"></div>
-  <div class="grid" id="grid"></div>
-  <div class="msg" id="msg"></div>
-  <div class="game-controls">
-    <button class="btn ghost" onclick="doShuffle()">Bland</button>
-    <button class="btn ghost" onclick="clearSel()">Tøm</button>
-    <button class="btn" id="guessBtn" onclick="doGuess()" disabled>Gjett</button>
-  </div>
-</div>
-
-
-<!-- SUMMARY -->
-<div id="summaryScreen" class="screen">
-  <h2 id="summaryTitle"></h2>
-  <p class="summary-sub" id="summarySub"></p>
-  <div class="emoji-grid" id="emojiGrid"></div>
-  <div class="summary-groups" id="summaryGroups"></div>
-  <button class="btn" onclick="showResult()">Se resultatlisten →</button>
-</div>
-
-<!-- RESULT -->
-<div id="resultScreen" class="screen">
-  <h2 id="resultTitle"></h2>
-  <p class="result-sub" id="resultSub"></p>
-  <div class="stat-row">
-    <div class="stat"><div class="stat-val" id="rTime">—</div><div class="stat-label">Tid</div></div>
-    <div class="stat"><div class="stat-val" id="rFeil">—</div><div class="stat-label">Feil</div></div>
-    <div class="stat"><div class="stat-val" id="rRank">—</div><div class="stat-label">Plass</div></div>
-  </div>
-  <div id="lbSection">
-    <div class="lb-title" id="lbTitle" style="margin-bottom:8px">Resultatliste</div>
-    <div class="lb-wrap">
-      <div class="lb-head"><span>#</span><span>Navn</span><span>Tid</span><span style="text-align:right">Feil</span></div>
-      <div id="leaderboard"></div>
+    <div class="status-bar">
+      <span>Markert: <strong class="count" id="markedCount">0</strong></span>
+      <span>Bingo: <strong class="count" id="bingoCount">0</strong></span>
+      <span>Angre: <strong class="count" id="undoCount">3</strong></span>
     </div>
+
+    <div class="bingo-markers" id="bingoMarkers">
+      <div class="marker"><div class="marker-dot" id="m-horizontal"></div><div class="marker-label">Vannrett</div></div>
+      <div class="marker"><div class="marker-dot" id="m-vertical"></div><div class="marker-label">Loddrett</div></div>
+      <div class="marker"><div class="marker-dot" id="m-diagonal"></div><div class="marker-label">Diagonal</div></div>
+      <div class="marker"><div class="marker-dot" id="m-full"></div><div class="marker-label">Fullt</div></div>
+    </div>
+
+    <div class="bingo-header">
+      <div class="bingo-letter">B</div>
+      <div class="bingo-letter">I</div>
+      <div class="bingo-letter">N</div>
+      <div class="bingo-letter">G</div>
+      <div class="bingo-letter">O</div>
+    </div>
+
+    <div class="bingo-grid" id="bingoGrid"></div>
+
+    <div class="phase2-wrap">
+      <button class="phase2-btn" id="phase2Btn" onclick="startPhase2()">
+        <span class="phase2-label">Klar for poengutdeling?</span>
+        <span class="phase2-sub">Start fase 2 — felles for alle</span>
+      </button>
+    </div>
+
+    <footer>Trykk for å markere &nbsp;·&nbsp; 5 på rad eller fullt brett vinner</footer>
   </div>
-  <button class="play-again-btn" onclick="show('archiveScreen')">📂 Spill en gammel nøtt</button>
+
 </div>
 
 <script>
-const ACTIVE_PUZZLE = {
-  id: 'nott_2025w19e',
-  title: 'Ukens nøtt',
-  groups: [
-    {bg:'#f9df6d', label:'Lett',      cat:'Slang for penger',              words:['GRYN','SPENN','LAPPER','DALER']},
-    {bg:'#a0c35a', label:'Medium',    cat:'Pizzakjeder i Norge',           words:['PEPPES','PIZZABAKEREN','DOMINOS','EGON']},
-    {bg:'#b0c4ef', label:'Vanskelig', cat:'Kjente dyr med egennavn',       words:['HARAMBE','JULIUS','LASSIE','DOLLY']},
-    {bg:'#ba81c5', label:'Djevelsk',  cat:'Alle heter Donald til fornavn', words:['TRUMP','DUCK','GLOVER','SUTHERLAND']},
-  ]
-};
+// ── BOARD DEFINITIONS ──
 
-const ARCHIVE = [
+const BOARDS = [
   {
-    id: 'nott_2025w18',
-    title: 'Uke 18',
-    subtitle: 'Dyr gjemt i ord · Norske kommuner',
-    groups: [
-      {bg:'#f9df6d', label:'Lett',      cat:'Kan stå foran "-tur"',           words:['SPASER','FJELL','KVELD','LUFTE']},
-      {bg:'#a0c35a', label:'Medium',    cat:'Ord for å sovne',                words:['DUPPE AV','NIKKE','DABBE AV','SLUMRE']},
-      {bg:'#b0c4ef', label:'Vanskelig', cat:'Også en norsk kommune',          words:['MOSS','SAND','TØNNE','TINN']},
-      {bg:'#ba81c5', label:'Djevelsk',  cat:'Inneholder et skjult norsk dyr', words:['TAPET','GULVET','BREVET','FORMEL']},
+    id: "nybegynner",
+    name: "Nivå 1 — Nybegynner",
+    desc: "Du ser Eurovision for første gang. Du ser etter det åpenbare.",
+    items: [
+      "Outfit-bytte midt i låten",
+      "Sangtittel: ett ord",
+      "Pyroteknikk i bakgrunnen",
+      "Minst seks personer på scenen samtidig",
+      "Sangen er på engelsk",
+      "Sangen er ikke på engelsk",
+      "Sangen blander to språk",
+      "En kvinnelig solist",
+      "En mannlig solist",
+      "En gruppe på tre eller flere",
+      "Røyk eller tåke på scenen",
+      "Konfetti eller glitter fra taket",
+      "Sanger går ned en trapp",
+      "Sanger spiller på et instrument",
+      "Refrenget er bare ett ord",
+      "Lang blikk-kontakt med kamera",
+      "Sangeren tar tak i mikrofonstativet",
+      "Sangeren synger på kne",
+      "Sangeren ligger på gulvet",
+      "Sangeren danser",
+      "Sangeren danser ikke",
+      "Stillhet midt i sangen",
+      "Hånd-hjerte-bevegelse mot publikum",
+      "Pride-flagg synlig i publikum",
+      "Vinder eller fan-effekt blåser hår",
+      "Grafikkanimasjon i bakgrunnen",
+      "Klapping i takt fra publikum",
+      "Tre eller flere danseløft",
+      "Bakgrunnssanger i kameraet",
+      "Sangen ender på en holdt høy tone",
+      "Sangen ender på en hvisket frase",
+      "Programlederen introduserer landet",
+      "Postcard før bidraget viser natur",
+      "Postcard før bidraget viser arrangørbyen",
+      "Sangeren skifter farge på outfit (LED/skift)",
+      "Sangeren ser direkte i kameraet",
+      "Lys i nasjonalflaggets farger på scenen",
+      "Røde lys for klimakset",
+      "Programlederen sier sangtittelen",
+    ]
+  },
+  {
+    id: "ledsager",
+    name: "Nivå 2 — Ledsageren",
+    desc: "Du ser fordi noen andre ser. Du følger med fra sofakroken.",
+    items: [
+      "Lavsang som plutselig eksploderer",
+      "Pyro synkronisert med trommer",
+      "Kostymeavsløring midt i låten",
+      "Bakgrunnssangere, ingen dansere",
+      "Sangeren synger på sitt morsmål",
+      "Sangeren bytter språk midt i låten",
+      "Roterende scenelement",
+      "Spiller piano på scenen",
+      "Spiller gitar på scenen",
+      "Begynner med a cappella",
+      "Åpner med dramatisk taushet",
+      "Usynlige bakgrunnssangere",
+      "Alene på scenen hele sangen",
+      "Tre+ kostymer i samme nummer",
+      "Går fra én side til den andre",
+      "Sangeren løftes over hodet",
+      "Sangeren tar av seg et plagg",
+      "Folkemusikk-instrument synlig",
+      "Trommer spilles live på scenen",
+      "Strykere live på scenen",
+      "Lukkede øyne i over fem sekunder",
+      "Sangeren peker mot publikum",
+      "Sangeren ligger eller sitter ved slutt av låten",
+      "Publikum lyser med mobiltelefoner",
+      "Scenografi inkluderer trapper",
+      "Plattform som hever seg",
+      "Vannfontene eller regn-effekt på scenen",
+      "Avslutter med håndsignal mot kamera",
+      "Sangeren faller på kne ved klimakset",
+      "Ren mørk bakgrunn uten projeksjon",
+      "Stor sirkel eller ring i scenografi",
+      "Sangeren bærer kåpe eller slep",
+      "Tre+ dansere i unison bevegelse",
+      "Mannlig danser med kjole",
+      "Sangeren peker oppover ved klimakset",
+      "Danserne skifter posisjon hver vers",
+      "Går mot kamera mens de synger",
+      "Publikum synger med på refrenget",
+      "Holder mikrofonen med begge hender",
+    ]
+  },
+  {
+    id: "vanlig-fan",
+    name: "Nivå 3 — Vanlig fan",
+    desc: "Du har sett i noen år. Du kjenner trekkene.",
+    items: [
+      "Falsett-tone i over to sekunder",
+      "Key change (modulasjon) før siste refreng",
+      "Sangen bytter tempo midtveis",
+      "Sangen bytter genre midtveis",
+      "Sangen blander engelsk og morsmål",
+      "Åpner med en spoken-word-frase",
+      "Inneholder en rap-del",
+      "Sangen er over 2:50 totalt",
+      "Åpner med kun stemme uten musikk",
+      "Wind machine brukt på sangeren",
+      "Sangeren går på trapp som hever seg",
+      "Speil eller refleksjon rundt sangeren",
+      "Pyro avfyrt på modulasjonen",
+      "Sangeren forsvinner og kommer tilbake",
+      "Drone-shot over publikum",
+      "360° kamera rundt sangeren",
+      "Synger til en annen på scenen",
+      "To artister synger refrenget unisont",
+      "Backing track høyere enn live-stemmen",
+      "Høy tone som ikke når frem",
+      "Sangeren puster hørbart i mikrofonen",
+      "Klipp til green room under bidraget",
+      "Stort prop trekkes på scenen",
+      "Stort prop fjernes under sangen",
+      "Reiser seg fra knestående med trommer",
+      "Lys i kostymet tennes underveis",
+      "Slep som dras ut til stor flate",
+      "Kysser hånden mot kamera ved slutt",
+      "Sangeren bukker eller neier ved slutt",
+      "Holder en blomst eller scene-objekt",
+      "Programleder uttaler land feil",
+      "Sangen presenteres med oversettelse",
+      "Tradisjonelt instrument fra hjemlandet",
+      "Sangeren har et nasjonalt motiv i kostyme",
+      "Kort klipp til publikum-jubel",
+      "Sangeren holder et flagg ved slutt",
+      "Åpner engelsk, bytter til morsmål",
+      "Åpner morsmål, bytter til engelsk",
+      "Avslutter lavere enn den startet",
+    ]
+  },
+  {
+    id: "entusiast",
+    name: "Nivå 4 — Entusiasten",
+    desc: "Du så semifinalene. Du kjenner alle bidragene fra før.",
+    items: [
+      "Bidraget åpner annerledes enn i semien",
+      "Kostymet er endret siden semien",
+      "Koreografi er endret siden semien",
+      "Scenografi er endret siden semien",
+      "Antall på scenen endret siden semien",
+      "Annet språk enn i semien",
+      "Pyro-mengde endret siden semien",
+      "Bidraget åpner med ny intro versus semien",
+      "Bidraget avslutter med ny outro versus semien",
+      "Sangeren har annen frisyre enn i semien",
+      "Modulasjon-øyeblikket har annet kamera enn semien",
+      "Sangeren bukker dypere enn i semien",
+      "Bakgrunnssangere endret siden semien",
+      "Danse-løft endret siden semien",
+      "Sangen er kuttet kortere enn semien",
+      "Bidraget bruker samme prop som semien",
+      "Nytt prop som ikke var i semien",
+      "Samme nøkkelbilde som i semien",
+      "Forrige artist hilser i green room",
+      "Går til green room under applausen",
+      "Tidligere ESC-vinner spilles i pausen",
+      "Vert nevner et tidligere ESC-vinnerland",
+      "Kommentator refererer til MGP",
+      "Vert sier «12 points» med spesiell uttale",
+      "Vert refererer til startnummer",
+      "Samme låtskriver som tidligere ESC-bidrag",
+      "Sangtittel vises på begge språk",
+      "Samme produsent som fjorårets vinner",
+      "Postcard viser artistens hjemland",
+      "Postcard inneholder et tradisjonelt motiv",
+      "Samme koreograf som fjoråret",
+      "Sterkere live enn i semien",
+      "Svakere live enn i semien",
+      "Håndsignal til regissøren synlig",
+      "Regissør fra et tidligere vinnerbidrag",
+      "Tidligere ESC-deltaker i publikum",
+      "Tidligere ESC-vinner deler ut poeng",
+      "LED-gulv brukt som scenografi",
+      "Sjelden kameravinkel — ovenfra",
+    ]
+  },
+  {
+    id: "veteran",
+    name: "Nivå 5 — Veteranen",
+    desc: "Du har sett ESC siden før du ble født. Du kjenner detaljene.",
+    items: [
+      "Lirekasse eller harmonika",
+      "Bagpipes eller bukkehorn",
+      "Dudelsekk eller folkefløyte",
+      "Tradisjonell drakt fra hjemlandet",
+      "Sangen er helt på minoritetsspråk",
+      "Instrument som er uvanlig i ESC",
+      "Akustisk parti midt i låten",
+      "Ukreditert gjest på scenen",
+      "Kjent låtskriver fra et annet ESC-år",
+      "Samme regissør som tidligere ESC-bidrag",
+      "Artist nevnt for tidligere nasjonale uttak",
+      "Artist nevnt for tidligere ESC-deltakelse",
+      "Artist kreditert flere ESC-deltakelser",
+      "LED-gulv kjent fra et tidligere år",
+      "360° kameraspinn rundt sangeren",
+      "Pyro på minst tre punkter samtidig",
+      "Skrik eller jubel før musikken",
+      "Falsk avslutning — musikken stopper og fortsetter",
+      "Modulasjon med halvtone-løft",
+      "Modulasjon med heltone-løft",
+      "Breakdown helt uten trommer",
+      "A cappella-parti midt i låten",
+      "Stillhet i over tre sekunder",
+      "Key change uten tempo-endring",
+      "Key change med tempo-endring",
+      "Danser som er animasjon eller prop",
+      "Vannfontene eller regn-effekt",
+      "Bratt scenografi — trapper eller plattformer",
+      "Speil brukt i scenografien",
+      "Scenen mørklegges helt ved slutt",
+      "Kamera-tilt fra gulv til tak",
+      "Kran-shot inn mot sangerens ansikt",
+      "Én sanger, ingen andre på scenen",
+      "Syv+ personer på scenen samtidig",
+      "Vert nevner et ESC-år før 2000",
+      "Vert nevner et land som ikke deltar",
+      "Vert refererer til Big Five-systemet",
+      "Kostyme refererer til hjemlandets historie",
+      "Postcard refererer til ESC-historie",
     ]
   }
 ];
 
-const LS_PLAYED = ACTIVE_PUZZLE.id + '_played';
-const LS_NAME   = ACTIVE_PUZZLE.id + '_name';
-const LB_KEY    = ACTIVE_PUZZLE.id + '_lb';
+// Separate phase 2 pool — same for all players, but each gets a random card
+const PHASE2_ITEMS = [
+  // — Spesifikke land-til-land 12-poengere
+  "Hellas gir 12 poeng til Kypros",
+  "Kypros gir 12 poeng til Hellas",
+  "Sverige gir 12 poeng til Norge",
+  "Norge gir 12 poeng til Sverige",
+  "Romania gir 12 poeng til Moldova",
+  "Moldova gir 12 poeng til Romania",
+  "San Marino gir 12 poeng til Italia",
+  "Aserbajdsjan gir 12 til Tyrkia",
+  "Tyrkia får 12 poeng (uansett fra hvem)",
+  "Polen gir 12 poeng til Ukraina",
+  "Ukraina gir 12 poeng til Polen",
+  "Storbritannia gir 12 poeng til Irland",
+  "Irland gir 12 poeng til Storbritannia",
+  "Tyskland gir 12 poeng til Tyrkia",
+  "Et nordisk land gir 12 til et annet nordisk land",
+  "Et balkansk land gir 12 til et annet balkansk land",
+  "Et baltisk land gir 12 til et annet baltisk land",
+  "Australia gir 12 til et europeisk land",
 
-let playerName = '';
-let currentPuzzle = null;
-let isArchiveMode = false;
-let tiles = [];
-let selected = [];
-let mistakes = 0;
-let solved = [];
-let elapsed = 0;
-let timerInterval = null;
-let myTs = null;
-let guessHistory = [];
+  // — Mottakerland-trekk (alle målbare)
+  "Tre+ 12-poengere fra juryen",
+  "Tre+ 12-poengere fra publikum",
+  "Et land får null poeng fra juryen",
+  "Et land får null poeng fra publikum",
+  "Står på 0 etter halve juryen",
+  "Hopper opp 10+ plasser hos publikum",
+  "Faller 10+ plasser hos publikum",
+  "Et land får mer enn 200 publikumspoeng",
+  "Et land får mer enn 200 jurypoeng",
+  "Vinneren har mer enn 400 totalpoeng",
+  "Vinneren har mindre enn 350 totalpoeng",
+  "To land har lik totalsum i sluttresultatet",
+  "Norge ender topp 10 totalt",
+  "Norge ender bunn 5 totalt",
+  "Sverige ender topp 5 totalt",
+  "Ukraina ender topp 5 totalt",
+  "Italia ender topp 5 totalt",
+  "Frankrike ender topp 5 totalt",
+  "Storbritannia ender bunn 5 totalt",
+  "Tyskland ender bunn 5 totalt",
+  "Spania ender bunn 5 totalt",
+  "Vertslandet ender utenfor topp 10",
+  "Et Big Five-land ender på siste plass",
+  "Sist i jury, topp 10 totalt",
+  "Nr 1 jury, ut av topp 5 totalt",
 
-const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyF25I83R0ksNh0bhYvqIa7VmSim7Qke67etgMwZ0FRjjb5m1tZAdlt_5IMQSI3I-SR/exec';
+  // — Programleder-trekk
+  "Programlederen sier feil navn på en jurytalsperson",
+  "Programlederen retter en uttalefeil etterpå",
+  "Programlederen avbryter en jurytalsperson",
+  "Programlederen ber en talsperson skynde seg",
+  "Programlederen mister tråden midt i et innslag",
+  "Programlederen sier feil totalsum og må rette",
+  "Programlederen takker feil jurytalsperson",
+  "Programlederen ler under et innslag",
+  "Programlederen bytter mellom to språk",
+  "Programleder: «twelve points» med stil",
 
-async function lbGet() {
-  try {
-    const r = await fetch(SCRIPT_URL + '?key=' + LB_KEY);
-    return await r.json();
-  } catch { return []; }
+  // — Talsperson-trekk (alle synlige)
+  "En talsperson hilser på morsmål før poengene",
+  "En talsperson har lyd som forsvinner",
+  "En talsperson har bilde som fryser",
+  "En talsperson leser fra lapp",
+  "Talsperson hilser navngitt person",
+  "En talsperson nevner sitt eget bidrag i kveld",
+  "En talsperson roser arrangørlandet",
+  "Talsperson holder helt innlegg før poengene",
+  "Talsperson kaller vert ved fornavn",
+  "Et land har to talspersoner samtidig",
+  "En talsperson bærer nasjonale farger",
+  "En talsperson sitter foran et flagg",
+  "En talsperson nevner et tidligere ESC-år",
+  "Talsperson sender fra hotellrom",
+  "Talsperson foran kjent severdighet",
+
+  // — Artist- og slutt-mekanikk
+  "En artist gråter i green room",
+  "En artist løfter flagget i green room",
+  "Artist vinker mot kamera ved 12",
+  "Nr 1 skifter 3+ ganger under publikum",
+  "Vinneren ledet ikke etter juryen",
+  "Vinneren krysser scenen mot mikrofonen",
+  "Vinneren synger reprise av låten",
+  "Vinneren tar imot trofeet på scenen",
+  "Vinneren takker på morsmål",
+  "Vinneren takker en navngitt person",
+  "Konfetti faller fra taket ved kåringen",
+  "Vert tar farvel før reprisen",
+];
+
+// ── STATE ──
+
+const STORAGE_KEY = "esc_bingo_2026_v11";
+
+function loadState() {
+  try { return JSON.parse(localStorage.getItem(STORAGE_KEY)) || {}; } catch { return {}; }
+}
+function saveState(s) {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(s));
 }
 
-async function lbSet(entry) {
-  try {
-    await fetch(SCRIPT_URL, {
-      method: 'POST',
-      body: JSON.stringify({...entry, key: LB_KEY}),
-    });
-  } catch {}
-}
+let state = loadState();
 
-function show(id) {
-  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-  document.getElementById(id).classList.add('active');
-}
-
-window.addEventListener('load', () => {
-  renderArchiveList();
-  if (localStorage.getItem(LS_PLAYED)) {
-    playerName = localStorage.getItem(LS_NAME) || '';
-    show('doneScreen');
-    renderDoneBoard();
+window.addEventListener('DOMContentLoaded', () => {
+  createStars();
+  if (state.boardId && state.card) {
+    showGame();
+  } else {
+    showPick();
   }
 });
 
-document.getElementById('nameInput').addEventListener('keydown', e => { if (e.key === 'Enter') startGame(); });
+function showPick() {
+  document.getElementById('pickScreen').style.display = 'block';
+  document.getElementById('gameScreen').style.display = 'none';
+  renderBoardList();
+}
 
-function renderArchiveList() {
-  const el = document.getElementById('archiveList'); el.innerHTML = '';
-  ARCHIVE.forEach(p => {
-    const div = document.createElement('div'); div.className = 'archive-item';
-    div.innerHTML = `<div><div class="a-title">${p.title}</div><div class="a-sub">${p.subtitle}</div></div><div class="a-arrow">›</div>`;
-    div.onclick = () => startArchiveGame(p);
+function renderBoardList() {
+  const el = document.getElementById('boardList');
+  el.innerHTML = '';
+  BOARDS.forEach(b => {
+    const div = document.createElement('div');
+    div.className = 'board-option';
+    div.innerHTML = `<div class="board-option-name">${b.name}</div><div class="board-option-desc">${b.desc}</div>`;
+    div.onclick = () => chooseBoard(b.id);
     el.appendChild(div);
   });
 }
 
-async function startGame() {
-  const name = document.getElementById('nameInput').value.trim();
-  if (!name) { document.getElementById('loginErr').textContent = 'Skriv inn et brukernavn.'; return; }
-  if (localStorage.getItem(LS_PLAYED)) {
-    playerName = localStorage.getItem(LS_NAME) || name;
-    show('doneScreen'); renderDoneBoard(); return;
+function chooseBoard(id) {
+  const board = BOARDS.find(b => b.id === id);
+  if (!board) return;
+  const shuffled = shuffle([...board.items]).slice(0, 24);
+  const card = [...shuffled.slice(0, 12), "__FREE__", ...shuffled.slice(12)];
+
+  // If this is a swap (state already had a board), mark swap as used
+  const isSwap = !!state.boardId;
+
+  state = {
+    boardId: id,
+    boardName: board.name,
+    card,
+    marked: [12],
+    markers: [],
+    phase: 1,
+    swapUsed: isSwap || state.swapUsed === true,
+  };
+  saveState(state);
+  showGame();
+}
+
+function swapBoard() {
+  if (state.swapUsed) return;
+  const ok = confirm("Du kan bare bytte nivå én gang. Vil du gå tilbake og velge et annet nivå?");
+  if (!ok) return;
+  showPick();
+}
+
+function showGame() {
+  document.getElementById('pickScreen').style.display = 'none';
+  document.getElementById('gameScreen').style.display = 'block';
+  updateBoardNameDisplay();
+  renderGrid();
+  renderMarkers();
+  updateStatus();
+  updatePhase2Button();
+  updateSwapButton();
+}
+
+function updateSwapButton() {
+  const btn = document.getElementById('swapBtn');
+  // Only show in phase 1 and only if swap not used yet
+  if (state.phase === 1 && !state.swapUsed) {
+    btn.classList.add('visible');
+  } else {
+    btn.classList.remove('visible');
   }
-  playerName = name;
-  document.getElementById('loginErr').textContent = '';
-  document.getElementById('startBtn').disabled = true;
-  document.getElementById('playerLabel').textContent = name;
-  isArchiveMode = false;
-  loadPuzzle(ACTIVE_PUZZLE.groups);
-  show('gameScreen');
-  timerInterval = setInterval(() => { elapsed++; document.getElementById('timerEl').textContent = fmt(elapsed); }, 1000);
 }
 
-function startArchiveGame(puzzle) {
-  isArchiveMode = true;
-  playerName = '';
-  document.getElementById('playerLabel').innerHTML = `${puzzle.title}<span class="archive-badge">Arkiv</span>`;
-  document.getElementById('timerEl').textContent = '00:00';
-  loadPuzzle(puzzle.groups);
-  show('gameScreen');
-  timerInterval = setInterval(() => { elapsed++; document.getElementById('timerEl').textContent = fmt(elapsed); }, 1000);
+function updateBoardNameDisplay() {
+  const isPhase2 = state.phase === 2;
+  document.getElementById('boardName').textContent =
+    isPhase2 ? 'Fase 2 — Poengutdeling' : state.boardName;
 }
 
-function loadPuzzle(groups) {
-  currentPuzzle = groups;
-  tiles = [...groups.flatMap(g => g.words)];
-  selected = []; mistakes = 0; solved = []; elapsed = 0; myTs = null;
-  clearInterval(timerInterval);
-  document.getElementById('feilTeller').textContent = 'Feil: 0';
-  document.getElementById('solvedArea').innerHTML = '';
-  document.getElementById('msg').textContent = '';
-  document.getElementById('guessBtn').disabled = true;
-  doShuffle();
+function updatePhase2Button() {
+  const btn = document.getElementById('phase2Btn');
+  if (state.phase === 2) {
+    btn.classList.add('active-phase');
+    btn.querySelector('.phase2-label').textContent = '↺ Tilbake til hovedrunde';
+    btn.querySelector('.phase2-sub').textContent = 'Fase 2 pågår';
+    btn.onclick = backToPhase1;
+  } else if (state.phase1Card) {
+    // Already played phase 2 once and went back
+    btn.classList.remove('active-phase');
+    btn.querySelector('.phase2-label').textContent = 'Fortsett poengutdeling';
+    btn.querySelector('.phase2-sub').textContent = 'Bytt tilbake til fase 2';
+    btn.onclick = resumePhase2;
+  } else {
+    btn.classList.remove('active-phase');
+    btn.querySelector('.phase2-label').textContent = 'Klar for poengutdeling?';
+    btn.querySelector('.phase2-sub').textContent = 'Start fase 2 — felles for alle';
+    btn.onclick = startPhase2;
+  }
 }
 
-function fmt(s) { return String(Math.floor(s/60)).padStart(2,'0')+':'+String(s%60).padStart(2,'0'); }
+function startPhase2() {
+  // Save phase 1 state so we can come back
+  state.phase1Card = state.card;
+  state.phase1Marked = state.marked;
+  state.phase1Markers = state.markers;
+
+  // Generate phase 2 card
+  const shuffled = shuffle([...PHASE2_ITEMS]).slice(0, 24);
+  state.card = [...shuffled.slice(0, 12), "__FREE__", ...shuffled.slice(12)];
+  state.marked = [12];
+  state.markers = [];
+  state.phase = 2;
+  saveState(state);
+  showGame();
+  // Smooth scroll to top so they see the new board
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function backToPhase1() {
+  // Save phase 2 progress
+  state.phase2Card = state.card;
+  state.phase2Marked = state.marked;
+  state.phase2Markers = state.markers;
+
+  // Restore phase 1
+  state.card = state.phase1Card;
+  state.marked = state.phase1Marked;
+  state.markers = state.phase1Markers;
+  state.phase = 1;
+  saveState(state);
+  showGame();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function resumePhase2() {
+  // Save phase 1
+  state.phase1Card = state.card;
+  state.phase1Marked = state.marked;
+  state.phase1Markers = state.markers;
+
+  // Restore phase 2
+  state.card = state.phase2Card;
+  state.marked = state.phase2Marked;
+  state.markers = state.phase2Markers;
+  state.phase = 2;
+  saveState(state);
+  showGame();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+const MAX_UNDOS = 3;
+
+function toggleCard(idx) {
+  if (idx === 12) return;
+  const marked = new Set(state.marked);
+
+  if (marked.has(idx)) {
+    // Trying to UN-mark — check undo budget
+    const undosKey = state.phase === 2 ? 'undosUsedP2' : 'undosUsedP1';
+    const used = state[undosKey] || 0;
+    if (used >= MAX_UNDOS) {
+      flashCard(idx);
+      return;
+    }
+    const remaining = MAX_UNDOS - used;
+    const ok = confirm(
+      `Vil du angre denne markeringen?\n\nDu har ${remaining} angring${remaining === 1 ? '' : 'er'} igjen i denne fasen.`
+    );
+    if (!ok) return;
+    state[undosKey] = used + 1;
+    marked.delete(idx);
+  } else {
+    marked.add(idx);
+  }
+
+  state.marked = Array.from(marked);
+  saveState(state);
+  renderGrid();
+  updateStatus();
+  checkBingo();
+}
+
+function flashCard(idx) {
+  const cards = document.querySelectorAll('.bingo-card');
+  const el = cards[idx];
+  if (!el) return;
+  el.classList.add('locked-flash');
+  setTimeout(() => el.classList.remove('locked-flash'), 600);
+}
 
 function renderGrid() {
-  const g = document.getElementById('grid'); g.innerHTML = '';
-  tiles.filter(w => !solved.includes(w)).forEach(w => {
-    const d = document.createElement('div');
-    d.className = 'tile'+(selected.includes(w)?' selected':'');
-    d.textContent = w; d.onclick = () => toggle(w);
-    g.appendChild(d);
-  });
-}
-
-function toggle(w) {
-  if (selected.includes(w)) selected = selected.filter(x => x !== w);
-  else { if (selected.length >= 4) return; selected.push(w); }
-  renderGrid();
-  document.getElementById('guessBtn').disabled = selected.length !== 4;
-}
-
-function clearSel() { selected = []; renderGrid(); document.getElementById('guessBtn').disabled = true; }
-
-function doShuffle() {
-  for (let i = tiles.length-1; i > 0; i--) { const j = Math.floor(Math.random()*(i+1)); [tiles[i],tiles[j]]=[tiles[j],tiles[i]]; }
-  clearSel(); renderGrid();
-}
-
-function doGuess() {
-  const grp = currentPuzzle.find(g => g.words.every(w => selected.includes(w)) && selected.every(w => g.words.includes(w)));
-  if (grp) {
-    solved.push(...grp.words); tiles = tiles.filter(w => !grp.words.includes(w));
-    guessHistory.push({correct: true, group: grp});
-    showSolvedCard(grp); selected = []; renderGrid();
-    document.getElementById('guessBtn').disabled = true;
-    setMsg('Riktig! ✓');
-    if (solved.length === 16) setTimeout(finishGame, 500);
-  } else {
-    const oneAway = currentPuzzle.some(g => g.words.filter(w => selected.includes(w)).length === 3);
-    const snapSelected = [...selected];
-    guessHistory.push({correct: false, selected: snapSelected});
-    mistakes++;
-    document.getElementById('feilTeller').textContent = 'Feil: ' + mistakes;
-    document.querySelectorAll('.tile.selected').forEach(t => { t.classList.add('shake'); setTimeout(() => t.classList.remove('shake'), 450); });
-    setTimeout(() => clearSel(), 120);
-    setMsg(oneAway ? 'Én unna — prøv igjen!' : 'Feil. Prøv igjen.');
-  }
-}
-
-function showSolvedCard(g) {
-  const el = document.createElement('div'); el.className = 'solved-card';
-  el.style.background = g.bg;
-  el.innerHTML = `<div class="s-label">${g.label}</div><div class="s-cat">${g.cat}</div><div class="s-words">${g.words.join(' · ')}</div>`;
-  document.getElementById('solvedArea').appendChild(el);
-}
-
-function setMsg(t) { const el = document.getElementById('msg'); el.textContent = t; setTimeout(() => { if (el.textContent === t) el.textContent = ''; }, 2500); }
-
-const COLOR_EMOJI = {'#f9df6d':'🟡','#a0c35a':'🟢','#b0c4ef':'🔵','#ba81c5':'🟣'};
-
-async function finishGame() {
-  clearInterval(timerInterval);
-  const feil = mistakes;
-  const won = solved.length === 16;
-
-  // Build summary screen
-  document.getElementById('summaryTitle').textContent = won ? 'Bra jobbet! 🎉' : 'Bedre lykke neste gang';
-  document.getElementById('summarySub').textContent = won
-    ? `Du fullførte på ${fmt(elapsed)} med ${feil} feil.`
-    : `Du fikk ${solved.length/4} av 4 grupper.`;
-
-  // Emoji grid
-  const grid = document.getElementById('emojiGrid');
+  const grid = document.getElementById('bingoGrid');
+  const markedSet = new Set(state.marked);
   grid.innerHTML = '';
-  guessHistory.forEach(g => {
-    const row = document.createElement('div'); row.className = 'emoji-row';
-    if (g.correct) {
-      for (let i = 0; i < 4; i++) {
-        const s = document.createElement('span');
-        s.textContent = COLOR_EMOJI[g.group.bg] || '⬜';
-        row.appendChild(s);
-      }
+  state.card.forEach((text, idx) => {
+    const isFree = text === "__FREE__";
+    const isMarked = markedSet.has(idx);
+    const div = document.createElement('div');
+    div.className = 'bingo-card' + (isMarked ? ' marked' : '') + (isFree ? ' free-space' : '');
+    if (isFree) {
+      div.innerHTML = '<span class="free-emoji">★</span>';
     } else {
-      // For wrong guesses, show which group each word belongs to
-      g.selected.forEach(w => {
-        const grp = currentPuzzle.find(gr => gr.words.includes(w));
-        const s = document.createElement('span');
-        s.textContent = grp ? (COLOR_EMOJI[grp.bg] || '⬜') : '⬜';
-        row.appendChild(s);
-      });
+      div.innerHTML = `<span class="card-text">${text}</span>`;
+      div.onclick = () => toggleCard(idx);
     }
-    grid.appendChild(row);
+    grid.appendChild(div);
   });
+}
 
-  // Summary groups (all 4 in order)
-  const groups = document.getElementById('summaryGroups');
-  groups.innerHTML = currentPuzzle.map(g => `
-    <div class="summary-card" style="background:${g.bg}">
-      <div class="sc-label">${g.label}</div>
-      <div class="sc-cat">${g.cat}</div>
-      <div class="sc-words">${g.words.join(' · ')}</div>
-    </div>`).join('');
+function updateStatus() {
+  document.getElementById('markedCount').textContent = state.marked.length;
+  document.getElementById('bingoCount').textContent = (state.markers || []).length;
+  const undosKey = state.phase === 2 ? 'undosUsedP2' : 'undosUsedP1';
+  const used = state[undosKey] || 0;
+  document.getElementById('undoCount').textContent = Math.max(0, MAX_UNDOS - used);
+}
 
-  // Prepare result screen in background
-  document.getElementById('resultTitle').textContent = won ? 'Bra jobbet! 🎉' : 'Bedre lykke neste gang';
-  document.getElementById('rTime').textContent = fmt(elapsed);
-  document.getElementById('rFeil').textContent = feil;
+// Lines grouped by marker category
+const LINE_GROUPS = {
+  horizontal: [[0,1,2,3,4],[5,6,7,8,9],[10,11,12,13,14],[15,16,17,18,19],[20,21,22,23,24]],
+  vertical: [[0,5,10,15,20],[1,6,11,16,21],[2,7,12,17,22],[3,8,13,18,23],[4,9,14,19,24]],
+  diagonal: [[0,6,12,18,24],[4,8,12,16,20]],
+  full: [Array.from({length:25},(_,i)=>i)],
+};
 
-  if (isArchiveMode) {
-    document.getElementById('rRank').textContent = '—';
-    document.getElementById('lbTitle').style.display = 'none';
-    document.getElementById('leaderboard').innerHTML = '<p style="font-size:14px;color:var(--muted);text-align:center;margin-top:1rem">Arkivspilling teller ikke på scoreboardet.</p>';
-    document.getElementById('resultSub').textContent = won ? `Du fullførte på ${fmt(elapsed)} med ${feil} feil.` : `Du fikk ${solved.length/4} av 4 grupper.`;
-  } else {
-    localStorage.setItem(LS_PLAYED, '1');
-    localStorage.setItem(LS_NAME, playerName);
-    myTs = Date.now();
-    const entry = { name: playerName, time: elapsed, feil, ts: myTs };
-    await lbSet(entry);
-    let lb = await lbGet();
-    const rank = lb.findIndex(e => e.ts === myTs) + 1;
-    document.getElementById('rRank').textContent = '#' + rank;
-    document.getElementById('lbTitle').style.display = '';
-    document.getElementById('resultSub').textContent = won ? `Du fullførte på ${fmt(elapsed)} med ${feil} feil.` : `Du fikk ${solved.length/4} av 4 grupper.`;
-    renderLB(lb, myTs, 'leaderboard');
+function checkBingo() {
+  const markedSet = new Set(state.marked);
+  const prevMarkers = new Set(state.markers || []);
+  let newBingo = false;
+
+  for (const [key, lines] of Object.entries(LINE_GROUPS)) {
+    if (prevMarkers.has(key)) continue;
+    const hit = lines.some(line => line.every(j => markedSet.has(j)));
+    if (hit) {
+      prevMarkers.add(key);
+      newBingo = true;
+    }
   }
 
-  show('summaryScreen');
+  state.markers = Array.from(prevMarkers);
+  saveState(state);
+  renderMarkers();
+  updateStatus();
+  if (newBingo) launchConfetti();
 }
 
-function showResult() {
-  show('resultScreen');
-}
-
-function rankEmoji(i) {
-  return i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : (i+1)+'';
-}
-function rankClass(i) {
-  return i === 0 ? 'top1' : i === 1 ? 'top2' : i === 2 ? 'top3' : '';
-}
-function renderLB(lb, ts, containerId) {
-  const el = document.getElementById(containerId);
-  if (!lb.length) { el.innerHTML = '<div style="padding:1rem;font-size:14px;color:var(--muted);text-align:center">Ingen resultater ennå.</div>'; return; }
-  let html = '';
-  lb.slice(0,20).forEach((e,i) => {
-    const me = e.ts === ts;
-    html += `<div class="lb-row${me?' me':''}">
-      <span class="lb-rank ${rankClass(i)}">${rankEmoji(i)}</span>
-      <span class="lb-name">${esc(e.name)}</span>
-      <span class="lb-time">${fmt(e.time)}</span>
-      <span class="lb-feil" style="text-align:right">${e.feil} feil</span>
-    </div>`;
+function renderMarkers() {
+  const markers = new Set(state.markers || []);
+  ['horizontal','vertical','diagonal','full'].forEach(key => {
+    const el = document.getElementById('m-' + key);
+    if (!el) return;
+    if (markers.has(key)) el.classList.add('lit');
+    else el.classList.remove('lit');
   });
-  el.innerHTML = html;
 }
 
-async function renderDoneBoard() {
-  const lb = await lbGet();
-  const el = document.getElementById('doneBoard');
-  if (!lb.length) { el.innerHTML = '<p style="font-size:14px;color:var(--muted)">Ingen resultater ennå.</p>'; return; }
-  let html = '<div class="lb-title">Resultatliste</div><table class="lb">';
-  lb.slice(0,20).forEach((e,i) => {
-    const me = e.name.toLowerCase() === playerName.toLowerCase();
-    html += `<tr${me?' class="me"':''}><td class="rank">${i+1}</td><td class="lname">${esc(e.name)}</td><td class="ltime">${fmt(e.time)}</td><td class="lfeil">${e.feil} feil</td></tr>`;
-  });
-  html += '</table>'; el.innerHTML = html;
+function shuffle(arr) {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
 }
 
-async function showPublicLB() {
-  const lb = await lbGet();
-  const el = document.getElementById('publicLeaderboard');
-  if (!lb.length) {
-    el.innerHTML = '<div style="padding:1rem;font-size:14px;color:var(--muted);text-align:center">Ingen har spilt ennå.</div>';
-  } else {
-    let html = '';
-    lb.slice(0,20).forEach((e,i) => {
-      html += `<div class="lb-row">
-        <span class="lb-rank ${rankClass(i)}">${rankEmoji(i)}</span>
-        <span class="lb-name">${esc(e.name)}</span>
-        <span class="lb-time">${fmt(e.time)}</span>
-        <span class="lb-feil" style="text-align:right">${e.feil} feil</span>
-      </div>`;
+function launchConfetti() {
+  const canvas = document.getElementById('confetti');
+  const ctx = canvas.getContext('2d');
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+  const pieces = Array.from({length: 120}, () => ({
+    x: Math.random() * canvas.width,
+    y: Math.random() * -200,
+    w: Math.random() * 10 + 4,
+    h: Math.random() * 6 + 4,
+    color: ['#FFD700','#FF0099','#00C3FF','#ffffff','#FF6B6B'][Math.floor(Math.random()*5)],
+    rot: Math.random() * 360,
+    vx: (Math.random() - 0.5) * 3,
+    vy: Math.random() * 3 + 2,
+    vr: (Math.random() - 0.5) * 6,
+  }));
+  let frame = 0;
+  (function draw() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    pieces.forEach(p => {
+      ctx.save();
+      ctx.translate(p.x, p.y);
+      ctx.rotate(p.rot * Math.PI / 180);
+      ctx.fillStyle = p.color;
+      ctx.fillRect(-p.w/2, -p.h/2, p.w, p.h);
+      ctx.restore();
+      p.x += p.vx; p.y += p.vy; p.rot += p.vr;
     });
-    el.innerHTML = html;
-  }
-  show('scoreboardScreen');
+    frame++;
+    if (frame < 120) requestAnimationFrame(draw);
+    else ctx.clearRect(0, 0, canvas.width, canvas.height);
+  })();
 }
 
-function esc(s) { return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
-
-// ---- ADMIN ----
-const ADMIN_PW = 'klpnøtt2025';
-
-function openAdmin() {
-  document.getElementById('adminOverlay').classList.add('open');
-  document.getElementById('adminLogin').style.display = 'block';
-  document.getElementById('adminPanel').style.display = 'none';
-  document.getElementById('adminPw').value = '';
-  document.getElementById('adminErr').textContent = '';
-  setTimeout(() => document.getElementById('adminPw').focus(), 100);
-}
-
-function closeAdmin() {
-  document.getElementById('adminOverlay').classList.remove('open');
-}
-
-function checkPw() {
-  const pw = document.getElementById('adminPw').value;
-  if (pw === ADMIN_PW) {
-    document.getElementById('adminLogin').style.display = 'none';
-    document.getElementById('adminPanel').style.display = 'block';
-  } else {
-    document.getElementById('adminErr').textContent = 'Feil passord.';
+function createStars() {
+  const container = document.getElementById('stars');
+  for (let i = 0; i < 80; i++) {
+    const s = document.createElement('div');
+    s.className = 'star';
+    s.style.left = Math.random() * 100 + '%';
+    s.style.top = Math.random() * 100 + '%';
+    s.style.animationDelay = Math.random() * 3 + 's';
+    s.style.animationDuration = (2 + Math.random() * 3) + 's';
+    s.style.opacity = Math.random() * 0.5 + 0.1;
+    container.appendChild(s);
   }
 }
-
-function words(id) {
-  return document.getElementById(id).value.split(',').map(w => w.trim().toUpperCase()).filter(Boolean);
-}
-
-function previewPuzzle() {
-  const groups = [
-    {bg:'#f9df6d', cat: document.getElementById('ycat').value.trim(), words: words('yw'), label:'Lett'},
-    {bg:'#a0c35a', cat: document.getElementById('gcat').value.trim(), words: words('gw'), label:'Medium'},
-    {bg:'#b0c4ef', cat: document.getElementById('bcat').value.trim(), words: words('bw'), label:'Vanskelig'},
-    {bg:'#ba81c5', cat: document.getElementById('pcat').value.trim(), words: words('pw2'), label:'Djevelsk'},
-  ];
-
-  const err = document.getElementById('genErr');
-  if (groups.some(g => g.words.length !== 4)) { err.textContent = 'Hver gruppe må ha nøyaktig 4 ord.'; return; }
-  err.textContent = '';
-
-  // Shuffle all words
-  const allWords = groups.flatMap(g => g.words).sort(() => Math.random() - 0.5);
-  const grid = document.getElementById('previewGrid');
-  grid.innerHTML = allWords.map(w => `<div class="preview-tile">${w}</div>`).join('');
-
-  const cards = document.getElementById('previewCards');
-  cards.innerHTML = groups.map(g => `
-    <div class="preview-card" style="background:${g.bg}">
-      <div class="pc-label">${g.label}</div>
-      <div class="pc-cat">${g.cat || '—'}</div>
-      <div class="pc-words">${g.words.join(' · ')}</div>
-    </div>`).join('');
-
-  document.getElementById('previewSection').style.display = 'block';
-}
-
-function generateCode() {
-  const id = document.getElementById('aId').value.trim();
-  const title = document.getElementById('aTitle').value.trim();
-  const subtitle = document.getElementById('aSubtitle').value.trim();
-  const ycat = document.getElementById('ycat').value.trim();
-  const gcat = document.getElementById('gcat').value.trim();
-  const bcat = document.getElementById('bcat').value.trim();
-  const pcat = document.getElementById('pcat').value.trim();
-  const yw = words('yw');
-  const gw = words('gw');
-  const bw = words('bw');
-  const pw = words('pw2');
-
-  const err = document.getElementById('genErr');
-  if (!id || !title || !ycat || !gcat || !bcat || !pcat) { err.textContent = 'Fyll inn alle felter.'; return; }
-  if ([yw,gw,bw,pw].some(w => w.length !== 4)) { err.textContent = 'Hver gruppe må ha nøyaktig 4 ord (kommaseparert).'; return; }
-  err.textContent = '';
-
-  const fmt = (words) => words.map(w => `'${w}'`).join(',');
-
-  const activePuzzle = `const ACTIVE_PUZZLE = {
-  id: '${id}',
-  title: 'Ukens nøtt',
-  groups: [
-    {bg:'#f9df6d', label:'Lett',      cat:'${ycat}', words:[${fmt(yw)}]},
-    {bg:'#a0c35a', label:'Medium',    cat:'${gcat}', words:[${fmt(gw)}]},
-    {bg:'#b0c4ef', label:'Vanskelig', cat:'${bcat}', words:[${fmt(bw)}]},
-    {bg:'#ba81c5', label:'Djevelsk',  cat:'${pcat}', words:[${fmt(pw)}]},
-  ]
-};`;
-
-  const archiveEntry = `  {
-    id: '${id}',
-    title: '${title}',
-    subtitle: '${subtitle}',
-    groups: [
-      {bg:'#f9df6d', label:'Lett',      cat:'${ycat}', words:[${fmt(yw)}]},
-      {bg:'#a0c35a', label:'Medium',    cat:'${gcat}', words:[${fmt(gw)}]},
-      {bg:'#b0c4ef', label:'Vanskelig', cat:'${bcat}', words:[${fmt(bw)}]},
-      {bg:'#ba81c5', label:'Djevelsk',  cat:'${pcat}', words:[${fmt(pw)}]},
-    ]
-  }`;
-
-  const output = `// ====== NY AKTIV NØTT ======
-// Erstatt ACTIVE_PUZZLE med dette:
-
-${activePuzzle}
-
-// ====== LEGG TIL I ARCHIVE ======
-// Legg dette inn øverst i ARCHIVE-arrayen:
-
-${archiveEntry},`;
-
-  document.getElementById('codeOutput').value = output;
-  document.getElementById('codeSection').style.display = 'block';
-  document.getElementById('copyMsg').textContent = '';
-}
-
-function copyCode() {
-  const el = document.getElementById('codeOutput');
-  el.select();
-  document.execCommand('copy');
-  document.getElementById('copyMsg').textContent = '✓ Kopiert!';
-  setTimeout(() => document.getElementById('copyMsg').textContent = '', 2500);
-}
-
-function clearAdmin() {
-  ['aId','aTitle','aSubtitle','ycat','yw','gcat','gw','bcat','bw','pcat','pw2'].forEach(id => {
-    document.getElementById(id).value = '';
-  });
-  document.getElementById('codeSection').style.display = 'none';
-  document.getElementById('genErr').textContent = '';
-}
-
-// Close on backdrop click
-window.addEventListener('load', function() {
-  document.getElementById('adminOverlay').addEventListener('click', function(e) {
-    if (e.target === this) closeAdmin();
-  });
-});
-
 </script>
-
-<!-- ADMIN OVERLAY -->
-<div id="adminOverlay">
-  <div id="adminBox">
-    <button class="admin-close" onclick="closeAdmin()">✕</button>
-    <h2>Admin 🔐</h2>
-    <p class="admin-sub">Dobbeltklikk på hjernen for å åpne dette panelet.</p>
-
-    <!-- PASSWORD -->
-    <div id="adminLogin">
-      <div class="admin-section">
-        <label>Passord</label>
-        <input type="password" id="adminPw" placeholder="Skriv inn passord" onkeydown="if(event.key==='Enter')checkPw()" />
-        <div class="admin-err" id="adminErr"></div>
-      </div>
-      <button class="btn" onclick="checkPw()">Logg inn</button>
-    </div>
-
-    <!-- GENERATOR -->
-    <div id="adminPanel" style="display:none">
-      <div class="admin-section">
-        <label>Uke-ID (unik per nøtt, f.eks. nott_2025w20)</label>
-        <input type="text" id="aId" placeholder="nott_2025w20" />
-      </div>
-      <div class="admin-section">
-        <label>Uketittel for arkivet (f.eks. Uke 20)</label>
-        <input type="text" id="aTitle" placeholder="Uke 20" />
-      </div>
-      <div class="admin-section">
-        <label>Arkiv-undertittel (hint om innholdet)</label>
-        <input type="text" id="aSubtitle" placeholder="Donald · Pizzakjeder · ..." />
-      </div>
-
-      <div class="admin-section">
-        <div class="group-label-row"><div class="color-dot" style="background:#f9df6d"></div>Gul — Lett</div>
-        <div class="group-row">
-          <input type="text" id="ycat" placeholder="Kategorinavn" />
-          <input type="text" id="yw" placeholder="ORD1, ORD2, ORD3, ORD4" />
-        </div>
-      </div>
-
-      <div class="admin-section">
-        <div class="group-label-row"><div class="color-dot" style="background:#a0c35a"></div>Grønn — Medium</div>
-        <div class="group-row">
-          <input type="text" id="gcat" placeholder="Kategorinavn" />
-          <input type="text" id="gw" placeholder="ORD1, ORD2, ORD3, ORD4" />
-        </div>
-      </div>
-
-      <div class="admin-section">
-        <div class="group-label-row"><div class="color-dot" style="background:#b0c4ef"></div>Blå — Vanskelig</div>
-        <div class="group-row">
-          <input type="text" id="bcat" placeholder="Kategorinavn" />
-          <input type="text" id="bw" placeholder="ORD1, ORD2, ORD3, ORD4" />
-        </div>
-      </div>
-
-      <div class="admin-section">
-        <div class="group-label-row"><div class="color-dot" style="background:#ba81c5"></div>Lilla — Djevelsk</div>
-        <div class="group-row">
-          <input type="text" id="pcat" placeholder="Kategorinavn" />
-          <input type="text" id="pw2" placeholder="ORD1, ORD2, ORD3, ORD4" />
-        </div>
-      </div>
-
-      <div class="admin-actions">
-        <button class="btn ghost" onclick="previewPuzzle()">Forhåndsvisning</button>
-        <button class="btn" onclick="generateCode()">Generer kode</button>
-        <button class="btn ghost" onclick="clearAdmin()">Tøm</button>
-      </div>
-      <div id="previewSection" style="display:none">
-        <h3>Forhåndsvisning</h3>
-        <div class="preview-grid" id="previewGrid"></div>
-        <div id="previewCards"></div>
-      </div>
-      <div class="admin-err" id="genErr"></div>
-
-      <div id="codeSection" style="display:none;margin-top:1.5rem">
-        <div class="admin-section">
-          <label>Generert kode — erstatt ACTIVE_PUZZLE og legg gammel nøtt i ARCHIVE</label>
-          <textarea id="codeOutput" readonly></textarea>
-        </div>
-        <button class="btn ghost" onclick="copyCode()">Kopier kode</button>
-        <div class="copy-success" id="copyMsg"></div>
-      </div>
-    </div>
-  </div>
-</div>
-
 </body>
 </html>
